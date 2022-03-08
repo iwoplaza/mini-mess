@@ -1,15 +1,21 @@
+from .client_logger import LOG
+
+
 class ClientCLI:
     def __init__(self, prefix='!', raw_text_handler=None):
         self.__commands = [
-            (('help', '?'), 'Prints all commands', lambda: self.__print_help())
+            (('help', '?'), 'Shows this list', lambda: self.__print_help())
         ]
         self.__prefix = prefix
         self.__raw_text_handler = raw_text_handler
 
     def __print_help(self):
-        print('HELP')
+        msg = 'Here\'s a list of available commands: \n'
+        
         for (names, description, _) in self.__commands:
-            print(f"{names} - {description}")
+            msg += f"{names} - {description}\n"
+        
+        LOG.info(msg)
 
     def __find_command(self, name):
         for cmd in self.__commands:
