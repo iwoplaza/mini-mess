@@ -1,30 +1,31 @@
-import socket
-
 from ..channel import Channel
+from src.common.packet import Packet
 from src.common.packet_types import PacketType
 
 
 class TCPChannel(Channel):
-    def __init__(self, host, port, encoding='cp1250'):
-        self.encoding = encoding
-        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        self.client.connect((host, port))
+    def __init__(self, sock):
+        self.sock = sock
 
     def close(self):
-        self.client.close()
+        self.sock.close()
 
-    def send_packet(self, packet_type: PacketType, content: bytes):
-        type_header = packet_type.value.to_bytes(1, byteorder='little', signed=False)
+    def send_packet(self, packet: Packet):
+        msg = packet.get_bytes()
 
-        self.client.send(type_header + content)
+        totalsent = 0
+        while totalsent < len(msg):
+            sent = self.sock.send(msg[totalsent:])
+            if sent == 0:
+                raise RuntimeError('Socket connection broken')
+            totalsent = totalsent + sent
 
     def receive_packet_header(self):
-        buffer = self.client.recv(1)
-        return int.from_bytes(buffer, byteorder='little', signed=False)
+        buffer = self.sock.recv(1)
+        return PacketType(int.from_bytes(buffer, byteorder='little', signed=False))
 
     def receive_var_len(self) -> bytes:
-        len_buffer = self.client.recv(1)
+        len_buffer = self.sock.recv(1)
         length = int.from_bytes(len_buffer, byteorder='little', signed=False)
 
         return self.receive_fixed_len(length)
@@ -33,7 +34,7 @@ class TCPChannel(Channel):
         chunks = []
         bytes_recd = 0
         while bytes_recd < length:
-            chunk = self.client.recv(min(length - bytes_recd, 2048))
+            chunk = self.sock.recv(min(length - bytes_recd, 2048))
             if chunk == b'':
                 raise RuntimeError('Socket connection broken')
             chunks.append(chunk)
