@@ -59,12 +59,19 @@ class ClientThread():
 
         # Handling unprompted messages
         while True:
-            packet_type = self.__client.try_retrieve()
-            if packet_type is None:
-                continue
+            try:
+                packet_type = self.__client.try_retrieve()
+                if packet_type is None:
+                    continue
 
-            LOG.debug(f'Got unprompted message of type {packet_type}')
-            if packet_type == PacketType.MESSAGE:
-                self.__handle_message_packet()
-            else:
-                LOG.error("Unhandled unprompted message of type {packet_type}")
+                LOG.debug(f'Got unprompted message of type {packet_type}')
+                if packet_type == PacketType.MESSAGE:
+                    self.__handle_message_packet()
+                else:
+                    LOG.error("Unhandled unprompted message of type {packet_type}")
+            except ConnectionResetError:
+                self.__channel.close()
+                self.__ctx.unregister_client(self.__client)
+
+                LOG.info(f"User '{self.__client.username}' left.")
+                return

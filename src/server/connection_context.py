@@ -21,6 +21,18 @@ class ConnectionContext:
         packet.append_var_len(bytes(client.username, encoding=ENCODING))
         self.send_to_all_except(packet, client)
 
+    def unregister_client(self, client: Client):
+        self.__mutex.acquire()
+        try:
+            del self.__client_dict[client.username]
+        finally:
+            self.__mutex.release()
+
+        packet = Packet(PacketType.USER_LEFT)
+        packet.append_var_len(bytes(client.username, encoding=ENCODING))
+        self.send_to_all_except(packet, client)
+
+
     def send_to_all(self, packet):
         self.__mutex.acquire()
 
