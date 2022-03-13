@@ -116,7 +116,10 @@ class ClientConnection:
             raise RuntimeError('Got invalid response from the server. Please try again, or contact the administrator.')
         status = SignInStatus(int.from_bytes(self.__channel.receive_fixed_len(1), byteorder='little'))
         if status != SignInStatus.OK:
-            raise RuntimeError('Got error: {status}')
+            if status == SignInStatus.USED_USERNAME:
+                raise RuntimeError('The username is already taken.')
+            else:
+                raise RuntimeError(f'Got error: {status}')
 
         with self.__mode_cv:
             self.__mode = ClientMode.CHAT

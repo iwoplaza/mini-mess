@@ -29,17 +29,25 @@ class ClientThread():
             return False
         
         username = str(self.__channel.receive_var_len(), encoding=ENCODING)
-        LOG.info(f'Hand-shake successful. \'{username}\' connected!')
+        client = Client(username, self.__channel)
 
-        self.__client = Client(username, self.__channel)
+        # Letting others know
+        if self.__ctx.register_client(client) == False:
+            LOG.info(f'A duplicate username: \'{username}\'.')
+
+            # Sending error response
+            packet = Packet(PacketType.SIGN_IN)
+            packet.append_bytes(bytes([SignInStatus.USED_USERNAME.value]))
+            client.send(packet)
+            return
+
+        LOG.info(f'Hand-shake successful. \'{username}\' connected!')
+        self.__client = client
 
         # Sending success response
         packet = Packet(PacketType.SIGN_IN)
         packet.append_bytes(bytes([SignInStatus.OK.value]))
         self.__client.send(packet)
-
-        # Letting others know
-        self.__ctx.register_client(self.__client)
 
         return True
 
@@ -55,8 +63,8 @@ class ClientThread():
 
     def __thread_func(self):
         try:
-            if not self.__perform_handshake():
-                return
+            while not self.__perform_handshake():
+                pass
 
             # Handling unprompted messages
             while True:

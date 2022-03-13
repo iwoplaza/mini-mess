@@ -43,7 +43,7 @@ class App:
             try:
                 self.__client_connection.sign_in(text)
             except RuntimeError as e:
-                LOG.info(f'Failed to sign-in. Reason: {e}')
+                LOG.info(f'Failed to sign-in. {e}')
                 return
 
             LOG.info(f'Logged in as "{text}". Type in "!help" or "!?" to get the list of available commands.\n' +

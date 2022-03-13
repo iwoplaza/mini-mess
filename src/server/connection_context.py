@@ -10,9 +10,12 @@ class ConnectionContext:
         self.__client_dict = dict()
         self.__mutex = Lock()
 
-    def register_client(self, client: Client):
+    def register_client(self, client: Client) -> bool:
         self.__mutex.acquire()
         try:
+            if client.username in self.__client_dict:
+                return False
+            
             self.__client_dict[client.username] = client
         finally:
             self.__mutex.release()
@@ -20,6 +23,8 @@ class ConnectionContext:
         packet = Packet(PacketType.USER_JOINED)
         packet.append_var_len(bytes(client.username, encoding=ENCODING))
         self.send_to_all_except(packet, client)
+
+        return True
 
     def unregister_client(self, client: Client):
         with self.__mutex:
