@@ -54,28 +54,29 @@ class ClientThread():
         self.__ctx.send_to_all_except(packet, self.__client)
 
     def __thread_func(self):
-        if not self.__perform_handshake():
-            return
-
         try:
+            if not self.__perform_handshake():
+                return
+
             # Handling unprompted messages
             while True:
-                try:
-                    packet_type = self.__client.try_retrieve()
-                    if packet_type is None:
-                        continue
+                packet_type = self.__client.try_retrieve()
+                if packet_type is None:
+                    continue
 
-                    LOG.debug(f'Got unprompted message of type {packet_type}')
-                    if packet_type == PacketType.MESSAGE:
-                        self.__handle_message_packet()
-                    else:
-                        LOG.error(f"Unhandled unprompted message of type {packet_type}")
-                except ConnectionResetError:
-                    self.__channel.close()
-                    self.__ctx.unregister_client(self.__client)
+                LOG.debug(f'Got unprompted message of type {packet_type}')
+                if packet_type == PacketType.MESSAGE:
+                    self.__handle_message_packet()
+                else:
+                    LOG.error(f"Unhandled unprompted message of type {packet_type}")
+        except ConnectionResetError:
+            self.__channel.close()
 
-                    LOG.info(f"User '{self.__client.username}' left.")
-                    return
+            if self.__client is not None:
+                self.__ctx.unregister_client(self.__client)
+                LOG.info(f"User '{self.__client.username}' left.")
+            else:
+                LOG.info(f"Unregistered user left.")
         except OSError as e:
             # This is called when trying to write to a closed socket.
             # Usually happens at the end of this thread's lifetime

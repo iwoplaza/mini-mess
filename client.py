@@ -48,6 +48,9 @@ class App:
 
             LOG.info(f'Logged in as "{text}". Type in "!help" or "!?" to get the list of available commands.\n' +
                      'Other than that, have fun chatting <3')
+
+            self.__prompt_ui.set_header_label([('Logged in as ', self.__ctx.WHITE_ON_BLACK), (self.__client_connection.get_username(), self.__ctx.CYAN_ON_BLACK)])
+            self.__prompt_ui.draw(self.__ctx)
         elif mode == ClientMode.CHAT:
             self.__client_connection.send_message(text)
     

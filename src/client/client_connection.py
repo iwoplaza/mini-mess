@@ -56,7 +56,7 @@ class ClientConnection:
                         "Put in your username below\n"
                     )
                 elif self.__mode == ClientMode.SIGNING_IN:
-                    self.__mode_cv.wait_for(lambda: self.__mode == ClientMode.CHAT)
+                    self.__mode_cv.wait_for(lambda: self.__mode != ClientMode.SIGNING_IN)
                 elif self.__mode == ClientMode.CHAT:
                     # Waiting for unprompted message
                     self.__comm_lock.acquire()
@@ -101,7 +101,14 @@ class ClientConnection:
         
         packet = Packet(PacketType.SIGN_IN)
         packet.append_var_len(bytes(self.__username, ENCODING))
-        self.__channel.send_packet(packet)
+
+        try:
+            self.__channel.send_packet(packet)
+        except ConnectionResetError:
+            with self.__mode_cv:
+                self.__mode = ClientMode.CONNECTING
+                self.__mode_cv.notify()
+            raise RuntimeError('Disconnected')
 
         # Waiting for response
         response_type = self.__channel.receive_packet_header()
@@ -131,3 +138,6 @@ class ClientConnection:
     def get_mode(self):
         with self.__mode_cv:
             return self.__mode
+
+    def get_username(self):
+        return self.__username

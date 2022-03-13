@@ -22,11 +22,11 @@ class ConnectionContext:
         self.send_to_all_except(packet, client)
 
     def unregister_client(self, client: Client):
-        self.__mutex.acquire()
-        try:
+        with self.__mutex:
+            if client.username not in self.__client_dict:
+                return
+            
             del self.__client_dict[client.username]
-        finally:
-            self.__mutex.release()
 
         packet = Packet(PacketType.USER_LEFT)
         packet.append_var_len(bytes(client.username, encoding=ENCODING))

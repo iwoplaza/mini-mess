@@ -18,11 +18,8 @@ class Client:
         self.__channel.close()
 
     def send(self, packet: Packet):
-        self.__comm_lock.acquire()
-        try:
+        with self.__comm_lock:
             self.__channel.send_packet(packet)
-        finally:
-            self.__comm_lock.release()
 
     def try_retrieve(self, timeout=0.2):
         self.__comm_lock.acquire()
