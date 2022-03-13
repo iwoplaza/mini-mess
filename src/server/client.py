@@ -14,6 +14,9 @@ class Client:
         #   - Having the listening thread catch the response to a prompted dialog.
         self.__comm_lock = Lock()
 
+    def close(self):
+        self.__channel.close()
+
     def send(self, packet: Packet):
         self.__comm_lock.acquire()
         try:

@@ -20,9 +20,11 @@ class PromptUI:
         key = self.__stdscr.getkey()
 
         if key == "\n":
-            v = self.__value
-            self.__value = ''
-            return v
+            if len(self.__value) > 0:
+                v = self.__value
+                self.__value = ''
+                return v
+            return None
         elif ord(key) == 8:
             self.__value = self.__value[:-1]
             LOG.debug(f'Pressed backspace')

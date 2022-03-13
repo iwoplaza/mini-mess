@@ -1,5 +1,6 @@
 import socket
 import yaml
+from src.common import Packet, PacketType
 
 from src.server import LOG, ClientThread
 from src.common.channel import TCPChannel
@@ -28,6 +29,10 @@ while True:
             pass
     except KeyboardInterrupt as e:
         break
-    
+
+# Disconnecting all clients
+packet = Packet(PacketType.SERVER_SHUTDOWN)
+connection_ctx.send_to_all(packet)
+connection_ctx.close_all()
 
 print('Exiting...')

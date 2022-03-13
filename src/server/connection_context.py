@@ -51,3 +51,8 @@ class ConnectionContext:
                     c.send(packet)
         finally:
             self.__mutex.release()
+
+    def close_all(self):
+        with self.__mutex:
+            for (_, c) in self.__client_dict.items():
+                c.close()

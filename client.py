@@ -7,78 +7,78 @@ from src.client import LOG, AbstractLogHandler, ClientCLI, \
 from src.client.ui import DrawContext, PromptUI, MessageBoardUI
 
 
-mode = ClientMode.SIGNING_IN
+class App:
+    def __init__(self, stdscr) -> None:
+        # UI
+        PROMPT_WINDOW_HEIGHT = 3
+        self.__stdscr = stdscr
+        self.__ctx = DrawContext()
+        self.__prompt_ui = PromptUI(stdscr, PROMPT_WINDOW_HEIGHT, curses.COLS, curses.LINES - PROMPT_WINDOW_HEIGHT, 0)
+        self.__msg_board_ui = MessageBoardUI(stdscr, curses.LINES - PROMPT_WINDOW_HEIGHT, curses.COLS, 0, 0)
 
-def main(stdscr):
-    PROMPT_WINDOW_HEIGHT = 3
+        # Functionality
+        self.__cli = ClientCLI(raw_text_handler=self.__handle_raw_text)
+        self.__running = True
+        self.__client_connection = ClientConnection(on_message=self.__handle_message)
 
-    ctx = DrawContext()
-    prompt_ui = PromptUI(stdscr, PROMPT_WINDOW_HEIGHT, curses.COLS, curses.LINES - PROMPT_WINDOW_HEIGHT, 0)
-    msg_board_ui = MessageBoardUI(stdscr, curses.LINES - PROMPT_WINDOW_HEIGHT, curses.COLS, 0, 0)
+        # Commands
+        def cmd_quit():
+            nonlocal self
+            self.__running = False
 
-    def handle_message(text: str, sender: str):
-        msg_board_ui.append_log_msg(text, sender=sender)
-        msg_board_ui.draw(ctx)
+        self.__cli.register_command(('quit', 'q'), cmd_quit, 'Quits this application.')
 
-    client_connection = ClientConnection(on_message=handle_message)
+    def __handle_message(self, text: str, sender: str):
+        self.__msg_board_ui.append_log_msg(text, sender=sender)
+        self.__msg_board_ui.draw(self.__ctx)
 
-    def handle_raw_text(text: str):
-        global mode
+    def __handle_log(self, log: str):
+        self.__handle_message(log, sender=None)
 
-        if mode == ClientMode.SIGNING_IN:
+    def __handle_raw_text(self, text: str):
+        mode = self.__client_connection.get_mode()
+        if mode == ClientMode.CONNECTING:
+            return
+        elif mode == ClientMode.SIGNING_IN:
             try:
-                client_connection.sign_in(text)
+                self.__client_connection.sign_in(text)
             except RuntimeError as e:
                 LOG.info(f'Failed to sign-in. Reason: {e}')
                 return
 
-            LOG.info(f"""Logged in as "{text}". Type in "!help" or "!?" to get the list of available commands.
-Other than that, have fun chatting <3""")
-
-            mode = ClientMode.CHAT
+            LOG.info(f'Logged in as "{text}". Type in "!help" or "!?" to get the list of available commands.\n' +
+                     'Other than that, have fun chatting <3')
         elif mode == ClientMode.CHAT:
-            client_connection.send_message(text)
+            self.__client_connection.send_message(text)
+    
+    def run(self):
+        # Running connecting handling in the background.
+        self.__client_connection.run()
 
-    cli = ClientCLI(raw_text_handler=handle_raw_text)
-    running = True
+        self.__stdscr.clear()
+        self.__stdscr.refresh()
 
-    def cmd_quit():
-        nonlocal running
-        running = False
+        self.__msg_board_ui.draw(self.__ctx)
+        self.__prompt_ui.draw(self.__ctx)
 
-    def handle_log(log: str):
-        msg_board_ui.append_log_msg(log)
-        msg_board_ui.draw(ctx)
+        log_handler = AbstractLogHandler(self.__handle_log)
+        log_handler.setLevel(logging.INFO)
+        LOG.addHandler(log_handler)
 
-    cli.register_command(('quit', 'q'), cmd_quit, 'Quits this application.')
+        while self.__running:
+            try:
+                raw = self.__prompt_ui.prompt_key()
 
-    stdscr.clear()
-    stdscr.refresh()
+                if raw is not None:
+                    self.__cli.handle_cmd(raw)
+                
+                self.__prompt_ui.draw(self.__ctx)
+            except KeyError as e:
+                print(f'Error: {e}')
 
-    msg_board_ui.draw(ctx)
-    prompt_ui.draw(ctx)
-
-    log_handler = AbstractLogHandler(handle_log)
-    log_handler.setLevel(logging.INFO)
-    LOG.addHandler(log_handler)
-
-    # Welcome message
-    LOG.info(f"""
-<> WELCOME TO MINI-MESS! <>
-===========================
-Put in your username below
-    """)
-
-    while running:
-        try:
-            raw = prompt_ui.prompt_key()
-
-            if raw is not None:
-                cli.handle_cmd(raw)
-            
-            prompt_ui.draw(ctx)
-        except KeyError as e:
-            print(f'Error: {e}')
+def main(stdscr):
+    app = App(stdscr)
+    app.run()
 
 
 if __name__ == '__main__':

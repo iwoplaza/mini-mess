@@ -3,5 +3,6 @@ from enum import Enum, unique
 
 @unique
 class ClientMode(Enum):
-    SIGNING_IN = 0
-    CHAT = 1
+    CONNECTING = 0
+    SIGNING_IN = 1
+    CHAT = 2
