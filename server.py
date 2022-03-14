@@ -1,5 +1,5 @@
 import socket
-from src.common import Packet, PacketType
+from src.common.packet import Packet, PacketType
 from src.common.channel import Channel
 from src.common.config import PORT
 

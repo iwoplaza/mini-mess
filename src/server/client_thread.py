@@ -1,6 +1,6 @@
 from threading import Thread, Lock
 
-from src.common import Packet, PacketType
+from src.common.packet import Packet, PacketType
 from src.common.channel import Channel
 from src.common.config import ENCODING
 from src.common.status_codes import SignInStatus

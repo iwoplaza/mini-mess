@@ -3,7 +3,7 @@ from threading import Thread
 
 from src.common.channel import Channel
 from src.common.config import ENCODING, PORT
-from src.common import Packet, PacketType
+from src.common.packet import PacketType, MessagePacket, SignInResponse
 from src.common.status_codes import SignInStatus
 from .connection_context import ConnectionContext
 from .server_logger import LOG
@@ -24,11 +24,7 @@ class UDPThread:
         sender = str(self.channel.receive_var_len(), encoding=ENCODING)
 
         LOG.info(f"({sender}): {msg}")
-
-        packet = Packet(PacketType.MESSAGE)
-        packet.append_var_len(bytes(msg, encoding=ENCODING))
-        packet.append_var_len(bytes(sender, encoding=ENCODING))
-        self.__ctx.send_udp_to_all_except(packet, sender)
+        self.__ctx.send_udp_to_all_except(MessagePacket(msg, sender), sender)
 
     def __handle_signin_packet(self):
         username = str(self.channel.receive_var_len(), encoding=ENCODING)
@@ -39,9 +35,7 @@ class UDPThread:
         LOG.info(f'UDP link esablished with \'{username}\'.')
 
         # Sending success response
-        packet = Packet(PacketType.SIGN_IN)
-        packet.append_bytes(bytes([SignInStatus.OK.value]))
-        self.channel.send_packet_to(packet, address)
+        self.channel.send_packet_to(SignInResponse(SignInStatus.OK), address)
 
     def __thread_func(self):
         while True:

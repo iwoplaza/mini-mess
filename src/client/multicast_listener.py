@@ -5,8 +5,7 @@ from threading import Thread, Lock
 
 from src.client.client_logger import LOG
 from src.common.channel import Channel
-from src.common.packet import Packet
-from src.common.packet_types import PacketType
+from src.common.packet import Packet, PacketType
 from src.common.config import ENCODING, MULTICAST_GROUP, MULTICAST_PORT, MULTICAST_TTL
 
 

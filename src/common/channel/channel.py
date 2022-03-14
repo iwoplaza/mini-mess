@@ -1,4 +1,4 @@
-from src.common import Packet, PacketType
+from src.common.packet import Packet, PacketType
 
 
 class Channel:

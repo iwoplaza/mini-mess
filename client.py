@@ -33,10 +33,18 @@ class App:
 
         def cmd_send_udp(_, rest):
             nonlocal self
+
+            if not rest:
+                raise RuntimeError('(!u/!udp) requires exactly 1 argument.')
+
             self.__udp_listener.send_message(rest)
 
         def cmd_send_multicast(_, rest):
             nonlocal self
+
+            if not rest:
+                raise RuntimeError('(!m/!multicast) requires exactly 1 argument.')
+
             self.__multicast_listener.send_message(rest)
 
         self.__cli.register_command(('quit', 'q'), cmd_quit, 'Quits this application.')
@@ -101,9 +109,12 @@ class App:
                 if raw is not None:
                     self.__cli.handle_cmd(raw)
                 
-                self.__prompt_ui.draw(self.__ctx)
             except KeyError as e:
-                print(f'Error: {e}')
+                LOG.info(e)
+            except RuntimeError as e:
+                LOG.info(e)
+            
+            self.__prompt_ui.draw(self.__ctx)
 
 def main(stdscr):
     app = App(stdscr)

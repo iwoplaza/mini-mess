@@ -1,7 +1,7 @@
 import socket
 from threading import Lock
 
-from src.common import Packet
+from src.common.packet import Packet
 from src.common.channel import Channel
 from src.server.server_logger import LOG
 

@@ -7,8 +7,7 @@ from src.client.client_logger import LOG
 from src.client.client_mode import ClientMode
 from src.client.udp_listener import UDPListener
 from src.common.channel import Channel
-from src.common.packet import Packet
-from src.common.packet_types import PacketType
+from src.common.packet import Packet, PacketType
 from src.common.config import ENCODING, HOST, PORT
 from src.common.status_codes import SignInStatus
 
