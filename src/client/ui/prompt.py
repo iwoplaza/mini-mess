@@ -31,6 +31,7 @@ class PromptUI:
 
     def prompt_key(self):
         key = self.__stdscr.getkey()
+        LOG.debug(f'Pressed key: \"{key}\" (ord: {ord(key)})')
 
         if len(key) > 1:
             LOG.debug(f'Pressed special key: {key}')
@@ -45,12 +46,12 @@ class PromptUI:
             self.__value = self.__value[:-1]
             return None
         elif ord(key) in QUIT_KEY_CODES:
+            LOG.debug('Pressed a QUIT key')
             return '!q'
         elif ord(key) in IGNORE_KEY_CODES:
+            LOG.debug(f'Ignored key (ord: {ord(key)})')
             return None
         
-        # if re.match('[!\w\d\s\']', key):
-        LOG.debug(f'Pressed key: \"{key}\" (ord: {ord(key)})')
         self.__value += key
         
         return None

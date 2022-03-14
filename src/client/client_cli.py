@@ -4,12 +4,12 @@ from .client_logger import LOG
 class ClientCLI:
     def __init__(self, prefix='!', raw_text_handler=None):
         self.__commands = [
-            (('help', '?'), 'Shows this list', lambda: self.__print_help())
+            (('help', '?'), 'Shows this list', self.__print_help)
         ]
         self.__prefix = prefix
         self.__raw_text_handler = raw_text_handler
 
-    def __print_help(self):
+    def __print_help(self, __, _):
         msg = 'Here\'s a list of available commands: \n'
         
         for (names, description, _) in self.__commands:
@@ -31,11 +31,12 @@ class ClientCLI:
             # Command
             raw = raw[len(self.__prefix):] # Removing the prefix
             delimiter_idx = raw.find(' ')
-            cmd_name = (raw[:delimiter_idx]).strip()
+            cmd_name = raw.strip()
             
             rest = None
             if delimiter_idx != -1:
                 rest = raw[(delimiter_idx+1):]
+                cmd_name = (raw[:delimiter_idx]).strip()
 
             cmd = self.__find_command(cmd_name)
             if cmd is not None:

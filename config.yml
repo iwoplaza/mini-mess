@@ -1,3 +1,6 @@
 host: localhost
 port: 9000
 encoding: cp1250
+multicast_group: '224.1.1.1'
+multicast_port: 5005
+multicast_ttl: 2
