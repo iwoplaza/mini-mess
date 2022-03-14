@@ -26,15 +26,21 @@ class ClientCLI:
     def register_command(self, names, action, description=''):
         self.__commands.append((names, description, action))
 
-    def handle_cmd(self, raw):
+    def handle_cmd(self, raw: str):
         if raw.startswith(self.__prefix):
             # Command
-            cmd_name = (raw[1:]).strip()
+            raw = raw[len(self.__prefix):] # Removing the prefix
+            delimiter_idx = raw.find(' ')
+            cmd_name = (raw[:delimiter_idx]).strip()
+            
+            rest = None
+            if delimiter_idx != -1:
+                rest = raw[(delimiter_idx+1):]
 
             cmd = self.__find_command(cmd_name)
             if cmd is not None:
                 (_, __, action) = cmd
-                action()
+                action(cmd_name, rest)
             else:
                 raise KeyError(f'Tried to perform unknown command: "{cmd_name}"')
         else:

@@ -10,11 +10,12 @@ from .server_logger import LOG
 
 
 class ClientThread():
-    def __init__(self, channel: Channel, ctx: ConnectionContext) -> None:
+    def __init__(self, channel: Channel, udp_channel: Channel, ctx: ConnectionContext) -> None:
         self.__thread = Thread(target=lambda: self.__thread_func(), daemon=True)
         self.__channel = channel
-        self.__client = None
+        self.__udp_channel = udp_channel
         self.__ctx = ctx
+        self.__client = None
 
     def run(self):
         self.__thread.start()
@@ -23,13 +24,14 @@ class ClientThread():
         LOG.info('Performing client hand-shake...')
 
         packet_type = self.__channel.receive_packet_header()
+
         if packet_type != PacketType.SIGN_IN:
             LOG.error('Client hand-shake failed. Expected SIGN_IN packet ' +
                       f'(type {PacketType.SIGN_IN.value}). Got {packet_type}')
             return False
         
         username = str(self.__channel.receive_var_len(), encoding=ENCODING)
-        client = Client(username, self.__channel)
+        client = Client(username, self.__channel, self.__udp_channel)
 
         # Letting others know
         if self.__ctx.register_client(client) == False:

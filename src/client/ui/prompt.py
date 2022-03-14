@@ -10,6 +10,10 @@ QUIT_KEY_CODES = [
     27, # Escape
 ]
 
+IGNORE_KEY_CODES = [
+    0 # Null char
+]
+
 
 class PromptUI:
     def __init__(self, stdscr, h, w, y, x) -> None:
@@ -42,6 +46,8 @@ class PromptUI:
             return None
         elif ord(key) in QUIT_KEY_CODES:
             return '!q'
+        elif ord(key) in IGNORE_KEY_CODES:
+            return None
         
         # if re.match('[!\w\d\s\']', key):
         LOG.debug(f'Pressed key: \"{key}\" (ord: {ord(key)})')

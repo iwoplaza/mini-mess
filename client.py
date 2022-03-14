@@ -1,9 +1,11 @@
 import curses
 import logging
 from curses import wrapper
+from threading import Lock
 
 from src.client import LOG, AbstractLogHandler, ClientCLI, \
                        ClientConnection, ClientMode
+from src.client.udp_listener import UDPListener
 from src.client.ui import DrawContext, PromptUI, MessageBoardUI
 
 
@@ -19,18 +21,32 @@ class App:
         # Functionality
         self.__cli = ClientCLI(raw_text_handler=self.__handle_raw_text)
         self.__running = True
+        self.__udp_listener = UDPListener(on_message=self.__handle_message)
         self.__client_connection = ClientConnection(on_message=self.__handle_message)
 
         # Commands
-        def cmd_quit():
+        def cmd_quit(_, __):
+            nonlocal self
+            self.__running = False
+
+        def cmd_send_udp(_, rest):
+            nonlocal self
+            self.__udp_listener.send_message(rest)
+
+        def cmd_send_multicast(_, rest):
             nonlocal self
             self.__running = False
 
         self.__cli.register_command(('quit', 'q'), cmd_quit, 'Quits this application.')
+        self.__cli.register_command(('u', 'udp'), cmd_send_udp, 'Sends a message using the UDP protocol (default is TCP)')
+        self.__cli.register_command(('m', 'multicast'), cmd_send_multicast, 'Sends a message using UDP Multicast, bypassing the server.')
+
+        self.__message_lock = Lock()
 
     def __handle_message(self, text: str, sender: str):
-        self.__msg_board_ui.append_log_msg(text, sender=sender)
-        self.__msg_board_ui.draw(self.__ctx)
+        with self.__message_lock:
+            self.__msg_board_ui.append_log_msg(text, sender=sender)
+            self.__msg_board_ui.draw(self.__ctx)
 
     def __handle_log(self, log: str):
         self.__handle_message(log, sender=None)
@@ -44,6 +60,13 @@ class App:
                 self.__client_connection.sign_in(text)
             except RuntimeError as e:
                 LOG.info(f'Failed to sign-in. {e}')
+                return
+
+            # Establishing UDP channel
+            try:
+                self.__udp_listener.establish_channel(self.__client_connection.get_username())
+            except RuntimeError as e:
+                LOG.info(f'Failed to establish UDP channel. {e}')
                 return
 
             LOG.info(f'Logged in as "{text}". Type in "!help" or "!?" to get the list of available commands.\n' +

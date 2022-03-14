@@ -37,6 +37,13 @@ class ConnectionContext:
         packet.append_var_len(bytes(client.username, encoding=ENCODING))
         self.send_to_all_except(packet, client)
 
+    def link_udp_channel(self, username: str, address):
+        with self.__mutex:
+            if username not in self.__client_dict:
+                return
+            
+            self.__client_dict[username].link_udp_channel(address)
+
 
     def send_to_all(self, packet):
         self.__mutex.acquire()
@@ -56,6 +63,12 @@ class ConnectionContext:
                     c.send(packet)
         finally:
             self.__mutex.release()
+
+    def send_udp_to_all_except(self, packet, exception: str):
+        with self.__mutex:
+            for (username, c) in self.__client_dict.items():
+                if username != exception:
+                    c.send_udp(packet)
 
     def close_all(self):
         with self.__mutex:

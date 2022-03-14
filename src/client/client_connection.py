@@ -5,7 +5,8 @@ from threading import Thread, Lock, Condition
 
 from src.client.client_logger import LOG
 from src.client.client_mode import ClientMode
-from src.common.channel import TCPChannel
+from src.client.udp_listener import UDPListener
+from src.common.channel import Channel
 from src.common.packet import Packet
 from src.common.packet_types import PacketType
 from src.common.config import ENCODING, HOST, PORT
@@ -30,7 +31,7 @@ class ClientConnection:
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((HOST, PORT))
-            self.__channel = TCPChannel(s)
+            self.__channel = Channel(s)
         except ConnectionRefusedError:
             return False
 
