@@ -31,7 +31,7 @@ class PromptUI:
 
     def prompt_key(self):
         key = self.__stdscr.getkey()
-        LOG.debug(f'Pressed key: \"{key}\" (ord: {ord(key)})')
+        LOG.debug(f'Pressed key: \"{key}\" ' + ('ord: {ord(key)})' if len(key) == 1 else ''))
 
         if len(key) > 1:
             LOG.debug(f'Pressed special key: {key}')
